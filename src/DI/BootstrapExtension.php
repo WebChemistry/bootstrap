@@ -4,6 +4,7 @@ namespace WebChemistry\Bootstrap\DI;
 
 use LogicException;
 use Nette\DI\CompilerExtension;
+use WebChemistry\Bootstrap\Environment;
 use WebChemistry\Bootstrap\ProjectDirectories;
 
 final class BootstrapExtension extends CompilerExtension
@@ -13,8 +14,12 @@ final class BootstrapExtension extends CompilerExtension
 	{
 		$builder = $this->getContainerBuilder();
 
-		$builder->addDefinition($this->prefix('projectDirectories'))
+		$def = $builder->addDefinition($this->prefix('projectDirectories'))
+			->setAutowired(false)
 			->setFactory(ProjectDirectories::class, $this->getParameters());
+
+		$builder->addDefinition($this->prefix('environment'))
+			->setFactory(Environment::class, [$builder->parameters['env'], $def]);
 	}
 
 	private function getParameters(): array

@@ -60,7 +60,7 @@ final class Bootstrap
 		}
 
 		$configurator->addParameters([
-			'environment' => $this->getEnvironment(),
+			'env' => $this->getEnvironment(),
 			'logDir' => $this->logDir ? $this->logDir->resolve() : null,
 		]);
 
