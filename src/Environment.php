@@ -2,7 +2,7 @@
 
 namespace WebChemistry\Bootstrap;
 
-final class Environment
+class Environment
 {
 
 	private string $environment;
@@ -35,9 +35,29 @@ final class Environment
 		return in_array($this->environment, ['dev', 'development']);
 	}
 
-	public function getDirectories(): ProjectDirectories
+	public function getWwwDir(): string
 	{
-		return $this->directories;
+		return $this->directories->getWwwDir();
+	}
+
+	public function getVendorDir(): string
+	{
+		return $this->directories->getVendorDir();
+	}
+
+	public function getAppDir(): string
+	{
+		return $this->directories->getAppDir();
+	}
+
+	public function getTempDir(): string
+	{
+		return $this->directories->getTempDir();
+	}
+
+	public function getLogDir(): ?string
+	{
+		return $this->directories->getLogDir();
 	}
 
 }
