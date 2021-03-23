@@ -19,6 +19,8 @@ final class Bootstrap
 
 	private bool $tracyEnabled;
 
+	private array $environment = [];
+
 	/** @var bool|string|string[]|null */
 	private $debugMode;
 
@@ -35,6 +37,20 @@ final class Bootstrap
 		$this->logDir = $logDir;
 		$this->projectDirectories = $projectDirectories;
 		$this->tracyEnabled = (bool) $logDir;
+	}
+
+	public function setEnvironmentFile(string $file): self
+	{
+		if (is_file($file)) {
+			$array = require $file;
+			if (!is_array($array)) {
+				throw new LogicException(sprintf('Environment file %s must return an array.'));
+			}
+
+			$this->environment = array_map('strval', $array);
+		}
+		
+		return $this;
 	}
 
 	public function createConfigurator(): Configurator
@@ -153,7 +169,9 @@ final class Bootstrap
 	public function getDebugMode()
 	{
 		if ($this->debugMode === null) {
-			$value = (new EnvironmentList(['NETTE_DEBUG_MODE', 'DEBUG_MODE']))->resolve();
+			$value = (new EnvironmentList(['NETTE_DEBUG_MODE', 'DEBUG_MODE']))
+				->setValues($this->environment)
+				->resolve();
 			if ($value !== null) {
 				if ($value === '1') {
 					$this->debugMode = true;
@@ -182,7 +200,9 @@ final class Bootstrap
 
 	public function getEnvironment(): ?string
 	{
-		$value = (new EnvironmentList(['NETTE_ENVIRONMENT', 'ENVIRONMENT']))->resolve();
+		$value = (new EnvironmentList(['NETTE_ENVIRONMENT', 'ENVIRONMENT']))
+			->setValues($this->environment)
+			->resolve();
 
 		return $value ?? 'dev';
 	}
