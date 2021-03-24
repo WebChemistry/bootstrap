@@ -222,15 +222,21 @@ final class Bootstrap
 		return $this;
 	}
 
-	public function debug(): void
+	public function debug(bool $barDump = false): void
 	{
-		dump([
+		$options = [
 			'tempDir' => $this->getTempDir(),
 			'logDir' => $this->logDir ? $this->getLogDir() : null,
 			'environment' => $this->getEnvironment(),
 			'debugMode' => $this->getDebugMode(),
 			'tracyEnabled' => $this->isTracyEnabled(),
-		]);
+		];
+
+		if ($barDump) {
+			bdump($options);
+		} else {
+			dump($options);
+		}
 	}
 
 }
