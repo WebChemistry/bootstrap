@@ -47,7 +47,7 @@ final class BootstrapBuilder
 		$bootstrap = new Bootstrap(
 			$this->bootstrapDirs,
 			$this->tempDir,
-			$this->disableTracy ? null : $this->logDir
+			$this->tracy ? null : $this->logDir
 		);
 
 		foreach ($this->configs as $config) {
