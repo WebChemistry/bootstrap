@@ -222,4 +222,15 @@ final class Bootstrap
 		return $this;
 	}
 
+	public function debug(): void
+	{
+		dump([
+			'tempDir' => $this->getTempDir(),
+			'logDir' => $this->logDir ? $this->getLogDir() : null,
+			'environment' => $this->getEnvironment(),
+			'debugMode' => $this->getDebugMode(),
+			'tracyEnabled' => $this->isTracyEnabled(),
+		]);
+	}
+
 }
