@@ -75,8 +75,13 @@ final class Bootstrap
 			$configurator->addConfig($config);
 		}
 
+		$env = new EnvironmentResolver($envString = $this->getEnvironment());
 		$configurator->addParameters([
-			'env' => $this->getEnvironment(),
+			'environment' => [
+				'production' => $env->isProduction(),
+				'development' => $env->isDevelopment(),
+				'value' => $envString,
+			],
 			'logDir' => $this->logDir ? $this->logDir->resolve() : null,
 		]);
 

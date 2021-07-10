@@ -5,7 +5,7 @@ namespace WebChemistry\Bootstrap;
 class Environment
 {
 
-	private string $environment;
+	private EnvironmentResolver $environment;
 
 	private ProjectDirectories $directories;
 
@@ -16,7 +16,7 @@ class Environment
 			$environment = 'dev';
 		}
 
-		$this->environment = $environment;
+		$this->environment = new EnvironmentResolver($environment);
 		$this->directories = $directories;
 	}
 
@@ -27,12 +27,12 @@ class Environment
 
 	public function isProduction(): bool
 	{
-		return in_array($this->environment, ['prod', 'production']);
+		return $this->environment->isProduction();
 	}
 
 	public function isDevelopment(): bool
 	{
-		return in_array($this->environment, ['dev', 'development']);
+		return $this->environment->isDevelopment();
 	}
 
 	public function getWwwDir(): string

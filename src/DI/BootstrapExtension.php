@@ -19,7 +19,7 @@ final class BootstrapExtension extends CompilerExtension
 			->setFactory(ProjectDirectories::class, $this->getParameters());
 
 		$builder->addDefinition($this->prefix('environment'))
-			->setFactory(Environment::class, [$builder->parameters['env'], $def]);
+			->setFactory(Environment::class, [$builder->parameters['environment']['value'], $def]);
 	}
 
 	private function getParameters(): array
