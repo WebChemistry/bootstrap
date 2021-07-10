@@ -44,9 +44,13 @@ abstract class DefaultBooting
 		return $this->createConfigurator();
 	}
 
-	public function bootConsole(): Configurator
+	public function bootConsole(bool $tracy = true): Configurator
 	{
 		$this->getBootstrap()->setDebugMode(true);
+
+		if (!$tracy) {
+			$this->getBootstrap()->disableTracy();
+		}
 
 		return $this->createConfigurator();
 	}
