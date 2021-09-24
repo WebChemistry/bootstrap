@@ -3,6 +3,7 @@
 namespace WebChemistry\Bootstrap;
 
 use Nette\Configurator;
+use Nette\Utils\Arrays;
 use ReflectionClass;
 
 abstract class DefaultBooting
@@ -19,13 +20,16 @@ abstract class DefaultBooting
 
 	protected ?string $defaultTempDirectory = null;
 
+	/** @var callable[] */
+	public array $onBootstrapCreated = [];
+
 	public function __construct(
-		protected string $localConfig,
+		protected ?string $localConfig,
 	)
 	{
 	}
 
-	public function setLocalConfig(string $localConfig): static
+	public function setLocalConfig(?string $localConfig): static
 	{
 		$this->localConfig = $localConfig;
 
@@ -68,9 +72,13 @@ abstract class DefaultBooting
 				$this->bootstrap->addConfig($config);
 			}
 
-			$this->bootstrap->addConfig($this->localConfig, true);
+			if ($this->localConfig) {
+				$this->bootstrap->addConfig($this->localConfig, true);
+			}
 
 			$this->onBootstrapCreated($this->bootstrap);
+			
+			Arrays::invoke($this->onBootstrapCreated, $this->bootstrap);
 		}
 
 		return $this->bootstrap;
@@ -112,14 +120,16 @@ abstract class DefaultBooting
 
 	protected function createLogDirectoryResolver(): DirectoryResolver
 	{
-		return DirectoryResolver::create($this->getDefaultLogDirectory())
-			->addEnvironment('NETTE_LOG_DIR');
+		return DirectoryResolver::create()
+			->setDefault($this->getDefaultLogDirectory())
+			->addEnvironmentName('NETTE_LOG_DIR');
 	}
 
 	protected function createTempDirectoryResolver(): DirectoryResolver
 	{
-		return DirectoryResolver::create($this->getDefaultTempDirectory())
-				->addEnvironment('NETTE_TEMP_DIR');
+		return DirectoryResolver::create()
+				->setDefault($this->getDefaultTempDirectory())
+				->addEnvironmentName('NETTE_TEMP_DIR');
 	}
 
 	protected function createBootstrapDirectories(): BootstrapDirectories

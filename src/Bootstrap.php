@@ -4,12 +4,10 @@ namespace WebChemistry\Bootstrap;
 
 use InvalidArgumentException;
 use LogicException;
-use Nette\SmartObject;
+use Nette\Utils\Arrays;
 
 final class Bootstrap
 {
-
-	use SmartObject;
 
 	private BootstrapDirectories $projectDirectories;
 
@@ -26,6 +24,9 @@ final class Bootstrap
 
 	/** @var string[] */
 	private array $configs = [];
+	
+	/** @var callable[] */
+	public array $onCreateConfigurator = [];
 
 	public function __construct(
 		BootstrapDirectories $projectDirectories,
@@ -48,8 +49,14 @@ final class Bootstrap
 			}
 
 			$this->environment = array_map('strval', $array);
+
+			if ($this->logDir) {
+				$this->logDir->setStaticEnvironments($this->environment);
+			}
+			
+			$this->tempDir->setStaticEnvironments($this->environment);
 		}
-		
+
 		return $this;
 	}
 
@@ -84,6 +91,8 @@ final class Bootstrap
 			],
 			'logDir' => $this->logDir ? $this->logDir->resolve() : null,
 		]);
+		
+		Arrays::invoke($this->onCreateConfigurator, $configurator);
 
 		return $configurator;
 	}
@@ -175,8 +184,9 @@ final class Bootstrap
 	{
 		if ($this->debugMode === null) {
 			$value = (new EnvironmentList(['NETTE_DEBUG_MODE', 'DEBUG_MODE']))
-				->setValues($this->environment)
+				->setStaticEnvironments($this->environment)
 				->resolve();
+			
 			if ($value !== null) {
 				if ($value === '1') {
 					$this->debugMode = true;
@@ -206,25 +216,10 @@ final class Bootstrap
 	public function getEnvironment(): ?string
 	{
 		$value = (new EnvironmentList(['NETTE_ENVIRONMENT', 'ENVIRONMENT']))
-			->setValues($this->environment)
+			->setStaticEnvironments($this->environment)
 			->resolve();
 
 		return $value ?? 'dev';
-	}
-
-	/**
-	 * @return static
-	 */
-	public function kubernetesEnvironment()
-	{
-		if (isset($_SERVER['HTTP_X_REAL_IP'])) {
-			$_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_X_REAL_IP'];
-		}
-		if (isset($_SERVER['KUBERNETES_SERVICE_PORT'])) {
-			$_SERVER['SERVER_PORT'] = $_SERVER['KUBERNETES_SERVICE_PORT'];
-		}
-
-		return $this;
 	}
 
 	public function debug(bool $barDump = false): void

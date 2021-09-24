@@ -11,7 +11,7 @@ final class EnvironmentResolver
 
 	public function __construct(?string $value)
 	{
-		$this->production = $value ? in_array($value, ['production', 'prod', 'produc'], true) : false;
+		$this->production = str_starts_with((string) $value, 'prod');
 		$this->development = !$this->production;
 	}
 
