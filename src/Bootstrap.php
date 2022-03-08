@@ -3,61 +3,31 @@
 namespace WebChemistry\Bootstrap;
 
 use InvalidArgumentException;
-use LogicException;
 use Nette\Utils\Arrays;
 
 final class Bootstrap
 {
 
-	private BootstrapDirectories $projectDirectories;
-
-	private DirectoryResolver $tempDir;
-
-	private ?DirectoryResolver $logDir;
-
 	private bool $tracyEnabled;
 
-	private array $environment = [];
-
 	/** @var bool|string|string[]|null */
-	private $debugMode;
+	private bool|string|array|null $debugModeResolved = null;
 
 	/** @var string[] */
 	private array $configs = [];
-	
+
 	/** @var callable[] */
 	public array $onCreateConfigurator = [];
 
 	public function __construct(
-		BootstrapDirectories $projectDirectories,
-		DirectoryResolver $tempDir,
-		?DirectoryResolver $logDir = null
+		private BootstrapDirectories $projectDirectories,
+		private EnvironmentValue $tempDir,
+		private EnvironmentValue $logDir,
+		private EnvironmentValue $environment,
+		private EnvironmentValue $debugMode,
 	)
 	{
-		$this->tempDir = $tempDir;
-		$this->logDir = $logDir;
-		$this->projectDirectories = $projectDirectories;
-		$this->tracyEnabled = (bool) $logDir;
-	}
-
-	public function setEnvironmentFile(string $file): self
-	{
-		if (is_file($file)) {
-			$array = require $file;
-			if (!is_array($array)) {
-				throw new LogicException(sprintf('Environment file %s must return an array.'));
-			}
-
-			$this->environment = array_map('strval', $array);
-
-			if ($this->logDir) {
-				$this->logDir->setStaticEnvironments($this->environment);
-			}
-			
-			$this->tempDir->setStaticEnvironments($this->environment);
-		}
-
-		return $this;
+		$this->tracyEnabled = (bool) $this->logDir->getValueNullable();
 	}
 
 	public function createConfigurator(): Configurator
@@ -72,35 +42,47 @@ final class Bootstrap
 			$this->getDebugMode() ?? $configurator::detectDebugMode()
 		);
 
-		if ($this->isTracyEnabled()) {
-			$configurator->enableTracy($this->getLogDir());
+		if ($this->tracyEnabled) {
+			$configurator->enableTracy($this->logDir->getValue());
 		}
 
-		$configurator->setTempDirectory($this->getTempDir());
+		$configurator->setTempDirectory($this->tempDir->getValue());
 
 		foreach ($this->configs as $config) {
 			$configurator->addConfig($config);
 		}
 
-		$env = new EnvironmentResolver($envString = $this->getEnvironment());
+		$environment = $this->environment->getValue();
 		$configurator->addParameters([
 			'environment' => [
-				'production' => $env->isProduction(),
-				'development' => $env->isDevelopment(),
-				'value' => $envString,
+				'production' => str_starts_with($environment, 'prod'),
+				'development' => str_starts_with($environment, 'dev'),
+				'value' => $environment,
 			],
-			'logDir' => $this->logDir ? $this->logDir->resolve() : null,
+			'logDir' => $this->logDir->getValueNullable(),
 		]);
-		
+
 		Arrays::invoke($this->onCreateConfigurator, $configurator);
 
 		return $configurator;
 	}
 
-	/**
-	 * @return static
-	 */
-	public function addConfig(string $filePath, bool $variables = false)
+	public function getLogDir(): EnvironmentValue
+	{
+		return $this->logDir;
+	}
+
+	public function getTempDir(): EnvironmentValue
+	{
+		return $this->tempDir;
+	}
+
+	public function getEnvironment(): EnvironmentValue
+	{
+		return $this->environment;
+	}
+
+	public function addConfig(string $filePath, bool $variables = false): self
 	{
 		if ($variables) {
 			$filePath = strtr(
@@ -124,52 +106,12 @@ final class Bootstrap
 
 	/**
 	 * @param bool|string|string[]|null $debugMode
-	 * @return static
 	 */
-	public function setDebugMode($debugMode)
+	public function setDebugMode($debugMode): self
 	{
-		$this->debugMode = $debugMode;
+		$this->debugModeResolved = $debugMode;
 
 		return $this;
-	}
-
-	public function hasLogDir(): bool
-	{
-		return (bool) $this->logDir;
-	}
-
-	public function getLogDir(): string
-	{
-		if (!$this->logDir) {
-			throw new LogicException('Log directory is not set');
-		}
-
-		return $this->logDir->resolve();
-	}
-
-	/**
-	 * @return static
-	 */
-	public function disableLogDir()
-	{
-		$this->logDir = null;
-
-		return $this;
-	}
-
-	public function getTempDirSource(): DirectoryResolver
-	{
-		return $this->tempDir;
-	}
-
-	public function getLogDirSource(): ?DirectoryResolver
-	{
-		return $this->logDir;
-	}
-
-	public function getTempDir(): string
-	{
-		return $this->tempDir->resolve();
 	}
 
 	public function getProjectDirectories(): BootstrapDirectories
@@ -180,25 +122,21 @@ final class Bootstrap
 	/**
 	 * @return bool|string|string[]|null
 	 */
-	public function getDebugMode()
+	public function getDebugMode(): bool|string|array|null
 	{
-		if ($this->debugMode === null) {
-			$value = (new EnvironmentList(['NETTE_DEBUG_MODE', 'DEBUG_MODE']))
-				->setStaticEnvironments($this->environment)
-				->resolve();
-			
-			if ($value !== null) {
-				if ($value === '1') {
-					$this->debugMode = true;
-				} elseif ($value === '0') {
-					$this->debugMode = false;
-				} else {
-					$this->debugMode = $value;
-				}
+		if ($this->debugModeResolved === null) {
+			$value = $this->debugMode->getValueNullable();
+
+			if ($value === '1') {
+				$this->debugModeResolved = true;
+			} elseif ($value === '0') {
+				$this->debugModeResolved = false;
+			} else {
+				$this->debugModeResolved = $value;
 			}
 		}
 
-		return $this->debugMode;
+		return $this->debugModeResolved;
 	}
 
 	public function disableTracy(): self
@@ -211,32 +149,6 @@ final class Bootstrap
 	public function isTracyEnabled(): bool
 	{
 		return $this->tracyEnabled;
-	}
-
-	public function getEnvironment(): ?string
-	{
-		$value = (new EnvironmentList(['NETTE_ENVIRONMENT', 'ENVIRONMENT']))
-			->setStaticEnvironments($this->environment)
-			->resolve();
-
-		return $value ?? 'dev';
-	}
-
-	public function debug(bool $barDump = false): void
-	{
-		$options = [
-			'tempDir' => $this->getTempDir(),
-			'logDir' => $this->logDir ? $this->getLogDir() : null,
-			'environment' => $this->getEnvironment(),
-			'debugMode' => $this->getDebugMode(),
-			'tracyEnabled' => $this->isTracyEnabled(),
-		];
-
-		if ($barDump) {
-			bdump($options);
-		} else {
-			dump($options);
-		}
 	}
 
 }

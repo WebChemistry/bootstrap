@@ -2,41 +2,20 @@
 
 namespace WebChemistry\Bootstrap;
 
-class ProjectDirectories
+use InvalidArgumentException;
+
+class ProjectDirectories extends BootstrapDirectories
 {
 
-	private string $wwwDir;
-
-	private string $vendorDir;
-
-	private string $appDir;
-
-	private string $tempDir;
-
-	private ?string $logDir;
-
-	public function __construct(string $wwwDir, string $vendorDir, string $appDir, string $tempDir, ?string $logDir)
+	public function __construct(
+		string $wwwDir,
+		string $vendorDir,
+		string $appDir,
+		private string $tempDir,
+		private ?string $logDir,
+	)
 	{
-		$this->wwwDir = $wwwDir;
-		$this->vendorDir = $vendorDir;
-		$this->appDir = $appDir;
-		$this->tempDir = $tempDir;
-		$this->logDir = $logDir;
-	}
-
-	public function getWwwDir(): string
-	{
-		return $this->wwwDir;
-	}
-
-	public function getVendorDir(): string
-	{
-		return $this->vendorDir;
-	}
-
-	public function getAppDir(): string
-	{
-		return $this->appDir;
+		parent::__construct($appDir, $wwwDir, $vendorDir);
 	}
 
 	public function getTempDir(): string

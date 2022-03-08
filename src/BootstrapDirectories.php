@@ -3,38 +3,16 @@
 namespace WebChemistry\Bootstrap;
 
 use InvalidArgumentException;
-use Nette\SmartObject;
 
-final class BootstrapDirectories
+class BootstrapDirectories
 {
 
-	use SmartObject;
-
-	private string $appDir;
-
-	private string $wwwDir;
-
-	private string $vendorDir;
-
-	public function __construct(string $appDir, ?string $wwwDir = null, ?string $vendorDir = null)
+	public function __construct(
+		private string $appDir,
+		private string $wwwDir,
+		private string $vendorDir,
+	)
 	{
-		$appDir = realpath($appDir);
-		if (!$appDir) {
-			throw new InvalidArgumentException(sprintf('app path (%s) not exists or permission denied', $appDir));
-		}
-		$this->appDir = $appDir;
-
-		$wwwDir = realpath($wwwDir ?? $appDir . '/../www');
-		if (!$wwwDir) {
-			throw new InvalidArgumentException(sprintf('www path (%s) not exists or permission denied', $appDir));
-		}
-		$this->wwwDir = $wwwDir;
-
-		$vendorDir = realpath($vendorDir ?? $appDir . '/../vendor');
-		if (!$vendorDir) {
-			throw new InvalidArgumentException(sprintf('vendor path (%s) not exists or permission denied', $vendorDir));
-		}
-		$this->vendorDir = $vendorDir;
 	}
 
 	public function getAppDir(): string
@@ -54,6 +32,21 @@ final class BootstrapDirectories
 
 	public static function create(string $appDir, ?string $wwwDir = null, ?string $vendorDir = null): self
 	{
+		$appDir = realpath($appDir);
+		if (!$appDir) {
+			throw new InvalidArgumentException(sprintf('app path (%s) not exists or permission denied', $appDir));
+		}
+
+		$wwwDir = realpath($wwwDir ?? $appDir . '/../www');
+		if (!$wwwDir) {
+			throw new InvalidArgumentException(sprintf('www path (%s) not exists or permission denied', $appDir));
+		}
+
+		$vendorDir = realpath($vendorDir ?? $appDir . '/../vendor');
+		if (!$vendorDir) {
+			throw new InvalidArgumentException(sprintf('vendor path (%s) not exists or permission denied', $vendorDir));
+		}
+
 		return new self($appDir, $wwwDir, $vendorDir);
 	}
 

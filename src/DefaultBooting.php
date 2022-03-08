@@ -16,17 +16,64 @@ abstract class DefaultBooting
 
 	private string $appPath;
 
+	private EnvironmentValue $logDir;
+
+	private EnvironmentValue $tmpDir;
+
+	private EnvironmentValue $environment;
+
 	protected ?string $defaultLogDirectory = null;
 
 	protected ?string $defaultTempDirectory = null;
+
+	protected EnvironmentVariables $env;
+
+	protected EnvironmentResolver $environmentResolver;
 
 	/** @var callable[] */
 	public array $onBootstrapCreated = [];
 
 	public function __construct(
 		protected ?string $localConfig,
+		?EnvironmentVariables $env = null,
 	)
 	{
+		$this->env = $env ?? new EnvironmentVariables();
+		$this->debugMode = EnvironmentValue::create('debug mode', $this->env)
+			->addEnvironment('NETTE_DEBUG_MODE');
+
+		$this->environment = EnvironmentValue::create('environment', $this->env)
+			->setDefault('production')
+			->addEnvironment('NETTE_ENVIRONMENT');
+
+		$this->logDir = EnvironmentValue::create('log directory', $this->env)
+			->setDefault($this->getAppPath() . '/../log')
+			->addEnvironment('NETTE_LOG_DIR');
+
+		$this->tmpDir = EnvironmentValue::create('tmp directory', $this->env)
+			->setDefault($this->getAppPath() . '/../tmp')
+			->addEnvironment('NETTE_TEMP_DIR')
+			->addEnvironment('NETTE_TMP_DIR');
+	}
+
+	public function getEnvironment(): EnvironmentValue
+	{
+		return $this->environment;
+	}
+
+	public function getLogDir(): EnvironmentValue
+	{
+		return $this->logDir;
+	}
+
+	public function getTmpDir(): EnvironmentValue
+	{
+		return $this->tmpDir;
+	}
+
+	public function getDebugMode(): EnvironmentValue
+	{
+		return $this->debugMode;
 	}
 
 	public function setLocalConfig(?string $localConfig): static
@@ -38,13 +85,6 @@ abstract class DefaultBooting
 
 	public function boot(): Configurator
 	{
-		return $this->createConfigurator();
-	}
-
-	public function bootCron(): Configurator
-	{
-		$this->getBootstrap()->disableTracy();
-
 		return $this->createConfigurator();
 	}
 
@@ -64,8 +104,10 @@ abstract class DefaultBooting
 		if (!isset($this->bootstrap)) {
 			$this->bootstrap = new Bootstrap(
 				$this->createBootstrapDirectories(),
-				$this->createTempDirectoryResolver(),
-				$this->createLogDirectoryResolver(),
+				$this->tmpDir,
+				$this->logDir,
+				$this->environment,
+				$this->debugMode,
 			);
 
 			foreach ($this->configs as $config) {
@@ -77,59 +119,16 @@ abstract class DefaultBooting
 			}
 
 			$this->onBootstrapCreated($this->bootstrap);
-			
+
 			Arrays::invoke($this->onBootstrapCreated, $this->bootstrap);
 		}
 
 		return $this->bootstrap;
 	}
 
-	public function setDefaultLogDirectory(?string $defaultLogDirectory): static
-	{
-		$this->defaultLogDirectory = $defaultLogDirectory;
-
-		return $this;
-	}
-
-	public function setDefaultTempDirectory(?string $defaultTempDirectory): static
-	{
-		$this->defaultTempDirectory = $defaultTempDirectory;
-
-		return $this;
-	}
-
 	protected function getAppPath(): string
 	{
-		if (!isset($this->appPath)) {
-			$reflection = new ReflectionClass(static::class);
-			$this->appPath = dirname($reflection->getFileName());
-		}
-
-		return $this->appPath;
-	}
-
-	protected function getDefaultLogDirectory(): string
-	{
-		return $this->defaultLogDirectory ?: $this->getAppPath() . '/../log';
-	}
-
-	protected function getDefaultTempDirectory(): string
-	{
-		return $this->defaultTempDirectory ?: $this->getAppPath() . '/../tmp';
-	}
-
-	protected function createLogDirectoryResolver(): DirectoryResolver
-	{
-		return DirectoryResolver::create()
-			->setDefault($this->getDefaultLogDirectory())
-			->addEnvironmentName('NETTE_LOG_DIR');
-	}
-
-	protected function createTempDirectoryResolver(): DirectoryResolver
-	{
-		return DirectoryResolver::create()
-				->setDefault($this->getDefaultTempDirectory())
-				->addEnvironmentName('NETTE_TEMP_DIR');
+		return $this->appPath ??= dirname((new ReflectionClass(static::class))->getFileName());
 	}
 
 	protected function createBootstrapDirectories(): BootstrapDirectories
