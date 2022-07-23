@@ -35,6 +35,11 @@ final class Configurator extends NetteConfigurator
 		return $this;
 	}
 
+	public function isProductionContainer(): bool
+	{
+		return $this->productionContainer;
+	}
+
 	public function loadContainer(): string
 	{
 		if ($this->productionContainer) {
