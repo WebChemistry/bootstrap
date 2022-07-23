@@ -56,12 +56,16 @@ final class Bootstrap
 
 		$configurator->addParameters([
 			'environment' => [
-				'production' => str_starts_with($this->environment, 'prod'),
+				'production' => $production = str_starts_with($this->environment, 'prod'),
 				'development' => str_starts_with($this->environment, 'dev'),
 				'value' => $this->environment,
 			],
 			'logDir' => $this->logDir,
 		]);
+
+		if ($production) {
+			$configurator->setProductionContainer();
+		}
 
 		Arrays::invoke($this->onCreateConfigurator, $configurator);
 
