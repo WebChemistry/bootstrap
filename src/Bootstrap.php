@@ -20,22 +20,24 @@ final class Bootstrap
 	public array $onCreateConfigurator = [];
 
 	public function __construct(
-		private BootstrapDirectories $projectDirectories,
-		private EnvironmentValue $tempDir,
-		private EnvironmentValue $logDir,
-		private EnvironmentValue $environment,
-		private EnvironmentValue $debugMode,
+		private string $appDir,
+		private string $wwwDir,
+		private string $vendorDir,
+		private string $tempDir,
+		private string $environment,
+		private ?string $logDir,
+		private ?string $debugMode,
 	)
 	{
-		$this->tracyEnabled = (bool) $this->logDir->getValueNullable();
+		$this->tracyEnabled = (bool) $this->logDir;
 	}
 
 	public function createConfigurator(): Configurator
 	{
 		$configurator = new Configurator(
-			$this->projectDirectories->getAppDir(),
-			$this->projectDirectories->getWwwDir(),
-			$this->projectDirectories->getVendorDir()
+			$this->appDir,
+			$this->wwwDir,
+			$this->vendorDir,
 		);
 
 		$configurator->setDebugMode(
@@ -43,43 +45,27 @@ final class Bootstrap
 		);
 
 		if ($this->tracyEnabled) {
-			$configurator->enableTracy($this->logDir->getValue());
+			$configurator->enableTracy($this->logDir);
 		}
 
-		$configurator->setTempDirectory($this->tempDir->getValue());
+		$configurator->setTempDirectory($this->tempDir);
 
 		foreach ($this->configs as $config) {
 			$configurator->addConfig($config);
 		}
 
-		$environment = $this->environment->getValue();
 		$configurator->addParameters([
 			'environment' => [
-				'production' => str_starts_with($environment, 'prod'),
-				'development' => str_starts_with($environment, 'dev'),
-				'value' => $environment,
+				'production' => str_starts_with($this->environment, 'prod'),
+				'development' => str_starts_with($this->environment, 'dev'),
+				'value' => $this->environment,
 			],
-			'logDir' => $this->logDir->getValueNullable(),
+			'logDir' => $this->logDir,
 		]);
 
 		Arrays::invoke($this->onCreateConfigurator, $configurator);
 
 		return $configurator;
-	}
-
-	public function getLogDir(): EnvironmentValue
-	{
-		return $this->logDir;
-	}
-
-	public function getTempDir(): EnvironmentValue
-	{
-		return $this->tempDir;
-	}
-
-	public function getEnvironment(): EnvironmentValue
-	{
-		return $this->environment;
 	}
 
 	public function addConfig(string $filePath, bool $variables = false): self
@@ -88,9 +74,9 @@ final class Bootstrap
 			$filePath = strtr(
 				$filePath,
 				[
-					'%appDir%' => $this->projectDirectories->getAppDir(),
-					'%wwwDir%' => $this->projectDirectories->getWwwDir(),
-					'%vendorDir%' => $this->projectDirectories->getVendorDir(),
+					'%appDir%' => $this->appDir,
+					'%wwwDir%' => $this->wwwDir,
+					'%vendorDir%' => $this->vendorDir,
 				]
 			);
 		}
@@ -107,16 +93,11 @@ final class Bootstrap
 	/**
 	 * @param bool|string|string[]|null $debugMode
 	 */
-	public function setDebugMode($debugMode): self
+	public function setDebugMode(bool|string|array|null $debugMode): self
 	{
 		$this->debugModeResolved = $debugMode;
 
 		return $this;
-	}
-
-	public function getProjectDirectories(): BootstrapDirectories
-	{
-		return $this->projectDirectories;
 	}
 
 	/**
@@ -125,7 +106,7 @@ final class Bootstrap
 	public function getDebugMode(): bool|string|array|null
 	{
 		if ($this->debugModeResolved === null) {
-			$value = $this->debugMode->getValueNullable();
+			$value = $this->debugMode;
 
 			if ($value === '1') {
 				$this->debugModeResolved = true;

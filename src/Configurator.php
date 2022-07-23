@@ -3,6 +3,7 @@
 namespace WebChemistry\Bootstrap;
 
 use Nette\Configurator as NetteConfigurator;
+use Nette\DI\ContainerLoader;
 
 /**
  * @internal
@@ -16,6 +17,8 @@ final class Configurator extends NetteConfigurator
 
 	private string $vendorDir;
 
+	private bool $productionContainer = false;
+
 	public function __construct(string $appDir, string $wwwDir, string $vendorDir)
 	{
 		$this->appDir = $appDir;
@@ -23,6 +26,24 @@ final class Configurator extends NetteConfigurator
 		$this->vendorDir = $vendorDir;
 
 		parent::__construct();
+	}
+
+	public function setProductionContainer(bool $value = true): self
+	{
+		$this->productionContainer = $value;
+
+		return $this;
+	}
+
+	public function loadContainer(): string
+	{
+		if ($this->productionContainer) {
+			$loader = new ContainerLoader($this->getCacheDirectory() . '/nette.configurator');
+
+			return $loader->load([$this, 'generateContainer']);
+		}
+
+		return parent::loadContainer();
 	}
 
 	/**

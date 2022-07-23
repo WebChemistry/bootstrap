@@ -2,8 +2,6 @@
 
 namespace WebChemistry\Bootstrap;
 
-use Nette\Utils\Arrays;
-
 final class EnvironmentVariables
 {
 
@@ -28,58 +26,25 @@ final class EnvironmentVariables
 			$values[strtoupper($key)] = $value;
 		}
 
-		$this->env = $env;
+		$this->env = $values;
 	}
 
-	public function get(string $name, string $default): string
+	public function get(string|array $names, ?string $default): ?string
 	{
-		return $this->env[strtoupper($name)] ?? $default;
-	}
+		foreach ((array) $names as $name) {
+			$name = strtoupper($name);
 
-	public function getNullable(string $name): ?string
-	{
-		return $this->env[strtoupper($name)] ?? null;
-	}
-
-	/**
-	 * @param string[] $names
-	 */
-	public function getOne(array $names, string $default): string
-	{
-		foreach ($names as $name) {
-			if ($this->has($name)) {
-				return $this->get($name, $default);
+			if (isset($this->env[$name])) {
+				return $this->env[$name];
 			}
 		}
 
 		return $default;
 	}
 
-	/**
-	 * @param string[] $names
-	 */
-	public function getOneNullable(array $names): ?string
-	{
-		foreach ($names as $name) {
-			if ($this->has($name)) {
-				return $this->getNullable($name);
-			}
-		}
-
-		return null;
-	}
-
 	public function has(string $name): bool
 	{
 		return isset($this->env[strtoupper($name)]);
-	}
-
-	/**
-	 * @param mixed[] $names
-	 */
-	public function hasOne(array $names): bool
-	{
-		return Arrays::some($names, fn (string $name) => $this->has($name));
 	}
 
 }

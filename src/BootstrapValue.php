@@ -2,15 +2,13 @@
 
 namespace WebChemistry\Bootstrap;
 
-use InvalidArgumentException;
 use LogicException;
-use Nette\Utils\FileSystem;
 
-final class EnvironmentValue
+final class BootstrapValue
 {
 
 	/** @var string[] */
-	private array $environments;
+	private array $environments = [];
 
 	private bool $disabled = false;
 
@@ -82,25 +80,7 @@ final class EnvironmentValue
 			return $this->value;
 		}
 
-		if ($this->default) {
-			return $this->environment->getOne($this->environments, $this->default);
-		}
-
-		return $this->environment->getOneNullable($this->environments);
-	}
-
-	public function resolve(): string
-	{
-		$value = $this->environments->resolve();
-		if (!$value) {
-			throw new LogicException('Default directory or fixed directory or environment is not set.');
-		}
-
-		if (!FileSystem::isAbsolute($value)) {
-			throw new InvalidArgumentException(sprintf('Path must be an absolute path, %s given', $value));
-		}
-
-		return $value;
+		return $this->environment->get($this->environments, $this->default);
 	}
 
 	public static function create(string $name, ?EnvironmentVariables $environment = null): self

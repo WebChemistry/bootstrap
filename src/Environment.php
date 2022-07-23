@@ -5,14 +5,15 @@ namespace WebChemistry\Bootstrap;
 class Environment
 {
 
-	private string $environment;
-
-	private ProjectDirectories $directories;
-
-	public function __construct(string $environment, ProjectDirectories $directories)
+	public function __construct(
+		private string $environment,
+		private string $wwwDir,
+		private string $vendorDir,
+		private string $appDir,
+		private string $tempDir,
+		private ?string $logDir,
+	)
 	{
-		$this->environment = $environment;
-		$this->directories = $directories;
 	}
 
 	public function getEnvironment(): string
@@ -32,27 +33,27 @@ class Environment
 
 	public function getWwwDir(): string
 	{
-		return $this->directories->getWwwDir();
+		return $this->wwwDir;
 	}
 
 	public function getVendorDir(): string
 	{
-		return $this->directories->getVendorDir();
+		return $this->vendorDir;
 	}
 
 	public function getAppDir(): string
 	{
-		return $this->directories->getAppDir();
+		return $this->appDir;
 	}
 
 	public function getTempDir(): string
 	{
-		return $this->directories->getTempDir();
+		return $this->tempDir;
 	}
 
 	public function getLogDir(): ?string
 	{
-		return $this->directories->getLogDir();
+		return $this->logDir;
 	}
 
 }

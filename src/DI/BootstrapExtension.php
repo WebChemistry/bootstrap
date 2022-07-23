@@ -5,7 +5,6 @@ namespace WebChemistry\Bootstrap\DI;
 use LogicException;
 use Nette\DI\CompilerExtension;
 use WebChemistry\Bootstrap\Environment;
-use WebChemistry\Bootstrap\ProjectDirectories;
 
 final class BootstrapExtension extends CompilerExtension
 {
@@ -14,23 +13,20 @@ final class BootstrapExtension extends CompilerExtension
 	{
 		$builder = $this->getContainerBuilder();
 
-		$def = $builder->addDefinition($this->prefix('projectDirectories'))
-			->setAutowired(false)
-			->setFactory(ProjectDirectories::class, $this->getParameters());
-
 		$builder->addDefinition($this->prefix('environment'))
-			->setFactory(Environment::class, [$builder->parameters['environment']['value'], $def]);
+			->setFactory(Environment::class, $this->getParameters());
 	}
 
 	private function getParameters(): array
 	{
 		$builder = $this->getContainerBuilder();
 
-		$args = [];
+		$args = [$builder->parameters['environment']['value']];
 		foreach (['wwwDir', 'vendorDir', 'appDir', 'tempDir'] as $item) {
 			if (!isset($builder->parameters[$item])) {
 				throw new LogicException(sprintf('Container parameter %s not exists', $item));
 			}
+
 			$args[] = $builder->parameters[$item];
 		}
 
