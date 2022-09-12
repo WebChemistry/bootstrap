@@ -16,69 +16,69 @@ abstract class DefaultBooting
 
 	private string $appPath;
 
-	private BootstrapValue $logDir;
+	private BootstrapVariable $logDir;
 
-	private BootstrapValue $tmpDir;
+	private BootstrapVariable $tmpDir;
 
-	private BootstrapValue $environment;
+	private BootstrapVariable $environment;
 
-	private BootstrapValue $debugMode;
+	private BootstrapVariable $debugMode;
 
-	private BootstrapValue $wwwDir;
+	private BootstrapVariable $wwwDir;
 
-	private BootstrapValue $vendorDir;
+	private BootstrapVariable $vendorDir;
 
-	protected EnvironmentVariables $env;
+	protected Env $env;
 
 	/** @var callable[] */
 	public array $onBootstrapCreated = [];
 
 	public function __construct(
 		protected ?string $localConfig,
-		?EnvironmentVariables $env = null,
+		?Env $env = null,
 	)
 	{
-		$this->env = $env ?? new EnvironmentVariables();
+		$this->env = $env ?? Env::fromNative();
 
-		$this->debugMode = BootstrapValue::create('debug mode', $this->env)
-			->addEnvironment('NETTE_DEBUG_MODE');
+		$this->debugMode = BootstrapVariable::create('debug mode', $this->env)
+			->append(BootstrapValue::fromEnv('NETTE_DEBUG_MODE'));
 
-		$this->environment = BootstrapValue::create('environment', $this->env)
-			->setDefault('production')
-			->addEnvironment('NETTE_ENVIRONMENT');
+		$this->environment = BootstrapVariable::create('environment', $this->env)
+			->append(BootstrapValue::fromEnv('NETTE_ENVIRONMENT'))
+			->append(BootstrapValue::fromString('production'));
 
-		$this->logDir = BootstrapValue::create('log directory', $this->env)
-			->setDefault($this->getAppPath() . '/../log')
-			->addEnvironment('NETTE_LOG_DIR');
+		$this->logDir = BootstrapVariable::create('log directory', $this->env)
+			->append(BootstrapValue::fromEnv('NETTE_LOG_DIR'))
+			->append(BootstrapValue::fromString($this->getAppPath() . '/../log'));
 
-		$this->tmpDir = BootstrapValue::create('tmp directory', $this->env)
-			->setDefault($this->getAppPath() . '/../tmp')
-			->addEnvironment('NETTE_TEMP_DIR')
-			->addEnvironment('NETTE_TMP_DIR');
+		$this->tmpDir = BootstrapVariable::create('tmp directory', $this->env)
+			->append(BootstrapValue::fromEnv('NETTE_TMP_DIR'))
+			->append(BootstrapValue::fromEnv('NETTE_TEMP_DIR'))
+			->append(BootstrapValue::fromString($this->getAppPath() . '/../tmp'));
 
-		$this->wwwDir = BootstrapValue::create('www directory', $this->env)
-			->setDefault($this->getAppPath() . '/../www');
+		$this->wwwDir = BootstrapVariable::create('www directory', $this->env)
+			->append(BootstrapValue::fromString($this->getAppPath() . '/../www'));
 
-		$this->vendorDir = BootstrapValue::create('vendor directory', $this->env)
-			->setDefault($this->getAppPath() . '/../vendor');
+		$this->vendorDir = BootstrapVariable::create('vendor directory', $this->env)
+			->append(BootstrapValue::fromString($this->getAppPath() . '/../vendor'));
 	}
 
-	public function getEnvironment(): BootstrapValue
+	public function getEnvironment(): BootstrapVariable
 	{
 		return $this->environment;
 	}
 
-	public function getLogDir(): BootstrapValue
+	public function getLogDir(): BootstrapVariable
 	{
 		return $this->logDir;
 	}
 
-	public function getTmpDir(): BootstrapValue
+	public function getTmpDir(): BootstrapVariable
 	{
 		return $this->tmpDir;
 	}
 
-	public function getDebugMode(): BootstrapValue
+	public function getDebugMode(): BootstrapVariable
 	{
 		return $this->debugMode;
 	}

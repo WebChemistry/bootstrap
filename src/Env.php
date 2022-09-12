@@ -2,33 +2,30 @@
 
 namespace WebChemistry\Bootstrap;
 
-final class EnvironmentVariables
+final class Env
 {
 
 	/** @var array<string, string> */
-	private array $env;
+	private array $env = [];
 
 	/**
 	 * @param array<string, string> $env
 	 */
-	public function __construct(?array $env = null)
+	public function __construct(array $env)
 	{
-		if ($env === null) {
-			$env = getenv();
-
-			if (!is_array($env)) {
-				$env = [];
-			}
-		}
-
-		$values = [];
 		foreach ($env as $key => $value) {
-			$values[strtoupper($key)] = $value;
+			$this->env[strtoupper($key)] = $value;
 		}
-
-		$this->env = $values;
 	}
 
+	public static function fromNative(): Env
+	{
+		return new Env(getenv());
+	}
+
+	/**
+	 * @param string|string[] $names
+	 */
 	public function get(string|array $names, ?string $default): ?string
 	{
 		foreach ((array) $names as $name) {
