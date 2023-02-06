@@ -64,7 +64,7 @@ final class Bootstrap
 			'logDir' => $this->logDir,
 		]);
 
-		if ($this->validateContainer === '1') {
+		if ($this->validateContainer === '0') {
 			$configurator->setProductionContainer();
 		}
 
