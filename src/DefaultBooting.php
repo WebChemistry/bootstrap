@@ -28,6 +28,8 @@ abstract class DefaultBooting
 
 	private BootstrapVariable $vendorDir;
 
+	private BootstrapVariable $validateContainer;
+
 	protected Env $env;
 
 	/** @var callable[] */
@@ -46,6 +48,10 @@ abstract class DefaultBooting
 		$this->environment = BootstrapVariable::create('environment', $this->env)
 			->append(BootstrapValue::fromEnv('NETTE_ENVIRONMENT'))
 			->append(BootstrapValue::fromString('production'));
+
+		$this->validateContainer = BootstrapVariable::create('validate container', $this->env)
+			->append(BootstrapValue::fromEnv('NETTE_VALIDATE_CONTAINER'))
+			->append(BootstrapValue::fromString('1'));
 
 		$this->logDir = BootstrapVariable::create('log directory', $this->env)
 			->append(BootstrapValue::fromEnv('NETTE_LOG_DIR'))
@@ -83,6 +89,11 @@ abstract class DefaultBooting
 		return $this->debugMode;
 	}
 
+	public function getValidateContainer(): BootstrapVariable
+	{
+		return $this->validateContainer;
+	}
+
 	public function setLocalConfig(?string $localConfig): static
 	{
 		$this->localConfig = $localConfig;
@@ -115,6 +126,7 @@ abstract class DefaultBooting
 				$this->vendorDir->getValue(),
 				$this->tmpDir->getValue(),
 				$this->environment->getValue(),
+				$this->validateContainer->getValue(),
 				$this->logDir->getValueNullable(),
 				$this->debugMode->getValueNullable(),
 			);

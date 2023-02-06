@@ -25,6 +25,7 @@ final class Bootstrap
 		private string $vendorDir,
 		private string $tempDir,
 		private string $environment,
+		private string $validateContainer,
 		private ?string $logDir,
 		private ?string $debugMode,
 	)
@@ -56,14 +57,14 @@ final class Bootstrap
 
 		$configurator->addParameters([
 			'environment' => [
-				'production' => $production = str_starts_with($this->environment, 'prod'),
+				'production' => str_starts_with($this->environment, 'prod'),
 				'development' => str_starts_with($this->environment, 'dev'),
 				'value' => $this->environment,
 			],
 			'logDir' => $this->logDir,
 		]);
 
-		if ($production) {
+		if ($this->validateContainer === '1') {
 			$configurator->setProductionContainer();
 		}
 
