@@ -28,7 +28,7 @@ class Environment
 
 	public function isDevelopment(): bool
 	{
-		return str_starts_with($this->environment, 'prod');
+		return !str_starts_with($this->environment, 'prod');
 	}
 
 	public function getWwwDir(): string
